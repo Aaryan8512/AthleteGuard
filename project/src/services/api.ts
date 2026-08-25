@@ -24,7 +24,9 @@ import { calculateRecoveryScore } from './recoveryEngine';
 //   GET  /api/coach/athletes
 //   GET  /api/athlete/{id}
 
-const API_BASE = import.meta.env.VITE_API_BASE ?? '';
+const API_BASE =
+  import.meta.env.VITE_API_BASE ??
+  (import.meta.env.PROD ? 'https://athleteguard.onrender.com' : '');
 const TOKEN_KEY = 'athleteguard_access_token';
 
 export function getAccessToken(): string | null {
