@@ -40,6 +40,9 @@ export async function authenticate(input: {
   password: string;
   name?: string;
 }): Promise<void> {
+  if (!API_BASE) {
+    throw new Error('The backend API is not configured for this deployed site.');
+  }
   const path = input.name ? '/api/auth/register' : '/api/auth/login';
   const body = input.name
     ? { name: input.name, email: input.email, password: input.password, role: 'athlete' }
@@ -49,17 +52,26 @@ export async function authenticate(input: {
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(body),
   });
-  if (!response.ok) throw new Error((await response.json()).detail ?? `API ${response.status}`);
+  if (!response.ok) throw new Error(await apiError(response));
   const token = input.name
     ? (await authenticate({ email: input.email, password: input.password }), getAccessToken())
     : (await response.json()).access_token;
   if (token) localStorage.setItem(TOKEN_KEY, token);
 }
 
+async function apiError(response: Response): Promise<string> {
+  const contentType = response.headers.get('content-type') ?? '';
+  if (contentType.includes('application/json')) {
+    const body = await response.json() as { detail?: string };
+    return body.detail ?? `API ${response.status}`;
+  }
+  return 'The backend API did not return a JSON response. Check the API URL.';
+}
+
 async function apiFetch<T>(path: string): Promise<T> {
   if (!API_BASE) throw new Error('API is not configured. Set VITE_API_BASE.');
   const res = await fetch(`${API_BASE}${path}`, { headers: authHeaders() });
-  if (!res.ok) throw new Error(`API ${res.status}`);
+  if (!res.ok) throw new Error(await apiError(res));
   return (await res.json()) as T;
 }
 
@@ -70,7 +82,7 @@ async function apiPost<T>(path: string, body: unknown): Promise<T> {
     headers: { 'Content-Type': 'application/json', ...authHeaders() },
     body: JSON.stringify(body),
   });
-  if (!res.ok) throw new Error(`API ${res.status}`);
+  if (!res.ok) throw new Error(await apiError(res));
   return (await res.json()) as T;
 }
 
