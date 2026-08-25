@@ -55,7 +55,7 @@ export async function authenticate(input: {
   if (!response.ok) throw new Error(await apiError(response));
   const token = input.name
     ? (await authenticate({ email: input.email, password: input.password }), getAccessToken())
-    : (await response.json()).access_token;
+    : (await readJson<{ access_token: string }>(response)).access_token;
   if (token) localStorage.setItem(TOKEN_KEY, token);
 }
 
@@ -68,11 +68,19 @@ async function apiError(response: Response): Promise<string> {
   return 'The backend API did not return a JSON response. Check the API URL.';
 }
 
+async function readJson<T>(response: Response): Promise<T> {
+  const contentType = response.headers.get('content-type') ?? '';
+  if (!contentType.includes('application/json')) {
+    throw new Error('The backend API returned HTML instead of JSON. Check VITE_API_BASE.');
+  }
+  return response.json() as Promise<T>;
+}
+
 async function apiFetch<T>(path: string): Promise<T> {
   if (!API_BASE) throw new Error('API is not configured. Set VITE_API_BASE.');
   const res = await fetch(`${API_BASE}${path}`, { headers: authHeaders() });
   if (!res.ok) throw new Error(await apiError(res));
-  return (await res.json()) as T;
+  return readJson<T>(res);
 }
 
 async function apiPost<T>(path: string, body: unknown): Promise<T> {
@@ -83,7 +91,7 @@ async function apiPost<T>(path: string, body: unknown): Promise<T> {
     body: JSON.stringify(body),
   });
   if (!res.ok) throw new Error(await apiError(res));
-  return (await res.json()) as T;
+  return readJson<T>(res);
 }
 
 function authHeaders(): Record<string, string> {
@@ -160,7 +168,7 @@ export function getMyAthlete(): Promise<Athlete> {
 
 export function updateAthlete(id: string, input: { sport: string; position: string; age: number | null; height: number | null; team: string }): Promise<Athlete> {
   return fetch(`${API_BASE}/api/athletes/${id}`, { method: 'PUT', headers: { 'Content-Type': 'application/json', ...authHeaders() }, body: JSON.stringify(input) }).then(async (response) => {
-    if (!response.ok) throw new Error(`API ${response.status}`);
-    return response.json();
+    if (!response.ok) throw new Error(await apiError(response));
+    return readJson<Athlete>(response);
   });
 }
