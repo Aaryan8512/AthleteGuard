@@ -3,7 +3,7 @@ import react from '@vitejs/plugin-react';
 import { defineConfig } from 'vite';
 
 export default defineConfig({
-  base: '/AthleteGuard/',
+  base: process.env.GITHUB_ACTIONS ? '/AthleteGuard/' : '/',
   plugins: [react()],
   resolve: {
     alias: {
