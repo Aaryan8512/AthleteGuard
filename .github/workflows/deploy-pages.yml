@@ -32,7 +32,7 @@ jobs:
       - name: Build frontend
         working-directory: project
         env:
-          VITE_API_BASE: ${{ vars.VITE_API_BASE }}
+          VITE_API_BASE: ${{ vars.VITE_API_BASE || 'https://athleteguard.onrender.com' }}
         run: npm run build
       - name: Setup Pages
         uses: actions/configure-pages@v5

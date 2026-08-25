@@ -12,6 +12,7 @@ allowed_origins = list({
 	'http://127.0.0.1:5173',
 	'http://127.0.0.1:5174',
 	'http://127.0.0.1:5175',
+	'https://aaryan8512.github.io',
 })
 app.add_middleware(CORSMiddleware, allow_origins=allowed_origins, allow_credentials=True, allow_methods=['*'], allow_headers=['*'])
 for router in (auth.router, athletes.router, workouts.router, recovery.router, training.router, movement.router, risk.router, coach.router, dashboard.router): app.include_router(router)
